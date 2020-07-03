@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="com.dayside.dbrs.book.mapper.BookReqMapper">
+
+	<insert id="insertBookPurchaseRequestService" parameterType="Book"> 
+		INSERT /* BookReqMapper.xml, insertBookPurchaseRequestService*/
+		INTO 
+		DAYSIDE_BOOK_HISTORY
+		(
+			 ORD_NUM,
+			 BOOK_TYPE,
+			 EMP_NUM,
+			 MBR_NAME,
+			 BOOK_NAME,
+			 ADDRESS,
+			 REQ_TYPE,
+			 REQ_YEARMONTH,
+			 STATUS,
+			 REQ_URL,
+			 PRICE,
+			 ETC,
+			 REG_DT,
+			 UPD_EMP_NUM,
+			 UPD_DT
+		)
+		VALUES
+		(
+		  #{ordNum},
+		  #{bookType},
+		  #{empNum},
+		  (SELECT MBR_NAME FROM DAYSIDE_BOOK_MEMBER WHERE EMP_NUM = #{empNum}),
+		  #{bookName},
+		  #{address},
+		  #{reqType},
+		  #{reqYearMonth},
+		  'REQUEST',
+		  #{reqUrl},
+		  #{price},
+		  #{etc},
+		  SYSTIMESTAMP,
+		  #{empNum},
+		  SYSTIMESTAMP
+		)
+	</insert> 
+	
+	<select id="selectRequestbooksService" parameterType="bookReqSearchData" resultType="book">
+		<![CDATA[
+		SELECT /* BookReqMapper.xml, selectRequestbookListService */
+		      ORD_NUM
+		    , EMP_NUM
+		    , MBR_NAME
+			, BOOK_NAME 
+			, REQ_YEARMONTH 
+			, REQ_TYPE
+			, STATUS
+			, REG_DT
+		FROM DAYSIDE_BOOK_HISTORY
+		]]>
+		<where>
+			<if test='adminYn == "N" '>
+			<![CDATA[
+				EMP_NUM = #{loginEmpNum}
+			]]>
+			</if>
+			<if test='adminYn == "Y" and empNum != null and empNum != "" '>
+			<![CDATA[
+				AND EMP_NUM = #{empNum}
+			]]>
+			</if>
+			<if test='adminYn == "Y" and mbrName != null and mbrName != "" '>
+			<![CDATA[
+				AND MBR_NAME = #{mbrName}
+			]]>
+			</if>
+			<if test="bookName != null and bookName != '' " >
+			<![CDATA[
+				AND BOOK_NAME LIKE '%' || #{bookName} || '%'
+			]]>
+			</if>
+			<if test="reqType != null and reqType != '' ">
+			<![CDATA[
+				AND REQ_TYPE = #{reqType}
+			]]>
+			</if>
+			<if test="reqYearMonth != null and reqYearMonth != '' ">
+			<![CDATA[
+				AND REQ_YEARMONTH = #{reqYearMonth}
+			]]>
+			</if>
+		</where>
+		<if test='adminYn == "N" '>
+			ORDER BY UPD_DT DESC
+		</if>
+		<if test='adminYn == "Y" '>
+			 ORDER BY DECODE(STATUS, 'REQUEST', 1) , UPD_DT DESC
+		</if>
+	</select>
+	
+	
+	<select id="selectPurchaseRequestDetail" parameterType="bookReqDetailRequest" resultType="book">
+		<![CDATA[
+		SELECT /* BookReqMapper.xml, selectRequestbookInfo */
+			   T1.*
+		FROM 
+		(  SELECT  A.ORD_NUM 
+			,B.MBR_ID
+            ,B.ADMIN_YN
+			, A.BOOK_NAME 
+			, A.ISBN10
+			, A.ISBN13
+			, A.REQ_URL
+			, A.REQ_YEARMONTH 
+			, A.REQ_TYPE
+			, A.ADDRESS
+			, A.PRICE
+			, A.EMP_NUM
+			, A.STATUS
+			, A. REG_DT
+			, A.MBR_NAME
+			, A.REJECT_REASON
+			, A.BOOK_TYPE
+			, A.ETC
+			FROM (DAYSIDE_BOOK_HISTORY) A
+       		LEFT OUTER JOIN (DAYSIDE_BOOK_MEMBER) B ON A.EMP_NUM =  B.EMP_NUM
+        	WHERE  ORD_NUM = #{ordNum} ) T1
+		]]>
+		
+	</select>
+	
+	<select  id="selectPurchaseRequestStatus" parameterType="BookRequestStatusInfo" resultType ="String">
+		<![CDATA[
+		SELECT /* BookReqMapper.xml, selectPurchaseRequestStatus */
+			  STATUS
+		FROM DAYSIDE_BOOK_HISTORY
+		WHERE  ORD_NUM = #{ordNum}
+		]]>
+	</select>
+	
+	<update id="updatePurchaseRequest" parameterType="BookRequestStatusInfo">
+		<![CDATA[
+			UPDATE /* BookReqMapper.xml, updatePurchaseRequest */
+				DAYSIDE_BOOK_HISTORY
+			SET STATUS = #{status},
+				UPD_EMP_NUM = #{empNum},
+				UPD_DT = SYSTIMESTAMP
+		]]>
+			<if test="rejectReason != '' and rejectReason != null">
+				, REJECT_REASON = #{rejectReason}
+			</if>
+			WHERE ORD_NUM = #{ordNum}
+	</update>
+</mapper>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="com.dayside.dbrs.member.mapper.MemberManageMapper">
+
+	<insert id="saveMemberJoinReq" parameterType="member"> 
+		<![CDATA[
+		INSERT  /* MemberManageMapper.xml, saveMemberJoinReq */
+		INTO 
+		DAYSIDE_BOOK_MEMBER
+		(
+			 EMP_NUM,
+			 MBR_ID,
+			 MBR_NAME,
+			 PASSWORD,
+			 USE_YN,
+			 ADMIN_YN,
+			 STATUS,
+			 REG_EMP_NUM,
+			 REG_DT,
+			 UPD_EMP_NUM,
+			 UPD_DT
+		)
+		 
+		VALUES
+		(
+		  #{empNum},
+		  #{mbrId},
+		  #{mbrName},
+		  #{password},
+		  'Y',
+		  'N',
+		  'REQUEST',
+		  #{empNum},
+		  SYSTIMESTAMP,
+		  #{empNum},
+		  SYSTIMESTAMP
+		)
+	  ]]>
+	</insert> 
+	
+    <select id="selectDuplicateId" parameterType="String" resultType="String"> 
+    <![CDATA[
+		SELECT /* MemberManageMapper.xml, selectDuplicateId */
+			MBR_ID
+		FROM DAYSIDE_BOOK_MEMBER
+		WHERE MBR_ID = #{mbrId}
+	]]>
+	</select> 
+	
+	<select id="selectDuplicateEmpNum" parameterType="String" resultType="String"> 
+    <![CDATA[
+		SELECT /* MemberManageMapper.xml, selectDuplicateEmpNum */
+			EMP_NUM
+		FROM DAYSIDE_BOOK_MEMBER
+		WHERE EMP_NUM = #{empNum}
+	]]>
+	</select> 
+	
+	<select id="selectLoginCheckService" parameterType="member" resultType="token"> 
+	<![CDATA[
+		SELECT /* MemberManageMapper.xml, selectLoginCheckService */
+			  EMP_NUM
+			  ,ADMIN_YN
+			  ,STATUS
+			  ,MBR_ID
+			  ,PASSWORD
+		FROM DAYSIDE_BOOK_MEMBER
+		WHERE MBR_ID = #{mbrId}
+		AND PASSWORD = #{password}
+		]]>
+		
+	</select> 
+	
+	<select id="selectSearchUserService" resultType="member">
+	<![CDATA[
+		SELECT /* MemberManageMapper.xml, selectSearchUserService */
+			EMP_NUM 
+			, MBR_ID
+			, MBR_NAME
+			, REG_DT
+			, STATUS
+		FROM DAYSIDE_BOOK_MEMBER
+		WHERE USE_YN = 'Y'
+		AND ADMIN_YN = 'N' 
+		ORDER BY DECODE(STATUS,'REQUEST',1), REG_DT ASC
+	]]>
+	</select>
+
+	<select id="selectUserInfoFromEmpNum" resultType="member">
+	<![CDATA[
+		SELECT /* MemberManageMapper.xml, selectUserInfoFromEmpNum */
+			MBR_ID, PASSWORD
+		FROM DAYSIDE_BOOK_MEMBER
+		WHERE USE_YN = 'Y'
+			AND EMP_NUM = #{empNum} 
+			AND ROWNUM = 1
+	]]>
+	</select>
+	
+	<update id="updateApprovalUserService" parameterType="memberJoinRequest">
+		<![CDATA[
+		UPDATE /* MemberManageMapper.xml, updateApprovalUserService */
+			DAYSIDE_BOOK_MEMBER
+		SET STATUS = #{status}
+		WHERE MBR_ID = #{mbrId}
+		]]>
+	</update>
+
+	<update id="updateUserPassword" parameterType="member">
+		<![CDATA[
+		UPDATE /* MemberManageMapper.xml, updateUserPassword */
+			DAYSIDE_BOOK_MEMBER
+		SET PASSWORD = #{password}, UPD_DT = SYSTIMESTAMP
+		WHERE MBR_ID = #{mbrId}
+		]]>
+	</update>
+</mapper>
